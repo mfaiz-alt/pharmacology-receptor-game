@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Drug–Receptor Binding Challenge (PH110)</title><meta name="description" content="Interactive drug–receptor binding quiz with a clue system for UiTM Diploma in Pharmacy (PH110). Developed by Faiz Zulkifli.">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#050d1f;--cy:#22d3ee;--tl:#2dd4bf;--tx:#e6f3ff;--mu:#8fb0cc;--ok:#34d399;--no:#fb7185;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:radial-gradient(ellipse at 20% 0,#0b2a52,var(--bg) 60%) var(--bg)}
+canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+#app{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:18px 14px 70px}
+.glass{background:rgba(16,38,70,.55);border:1px solid rgba(34,211,238,.22);backdrop-filter:blur(12px);border-radius:20px;padding:18px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+h1{font-size:clamp(18px,3.2vw,28px);letter-spacing:.18em;margin:0;text-align:center;color:var(--cy);text-shadow:0 0 18px rgba(34,211,238,.5)}
+.bar{display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px;flex-wrap:wrap;gap:8px;font-weight:600;letter-spacing:.08em}
+.pill{padding:6px 14px;border-radius:99px;background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.3);font-size:14px}
+.prog{height:6px;background:rgba(255,255,255,.08);border-radius:9px;overflow:hidden;margin-bottom:14px}.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--tl),var(--cy));transition:width .5s}
+.prompt{text-align:center;color:var(--mu);margin:6px 0 14px}
+.zone{position:relative}
+.lig-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:16px;min-height:92px}
+.lbl{font-size:11px;letter-spacing:.3em;color:var(--mu)}
+#lig{position:relative;z-index:50;display:inline-flex;align-items:center;gap:10px;padding:12px 24px;margin-top:6px;border-radius:99px;font-weight:800;letter-spacing:.14em;font-size:clamp(16px,3vw,22px);background:linear-gradient(135deg,#0e7490,#14b8a6);box-shadow:0 0 24px rgba(34,211,238,.55);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+#lig.drag{cursor:grabbing;box-shadow:0 0 40px rgba(34,211,238,.9)}
+#lig.bound{animation:pulse .6s 2}
+@keyframes pulse{50%{box-shadow:0 0 60px #fff}}
+.recs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;transition:filter .35s}
+.zone.blur .recs{filter:blur(9px)}
+@media(max-width:720px){.recs{grid-template-columns:repeat(2,1fr)}}
+.rec{text-align:center;padding:10px;border-radius:18px;background:rgba(10,25,50,.6);border:1px solid rgba(34,211,238,.18);transition:.2s;min-height:190px}
+.rec.hov{border-color:var(--cy);box-shadow:0 0 22px rgba(34,211,238,.55);transform:scale(1.03)}
+.rec.shake{animation:shake .45s;border-color:var(--no)}
+.rec.win{border-color:var(--ok);box-shadow:0 0 28px rgba(52,211,153,.7)}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.rec svg{width:100%;max-height:150px}
+.rn{font-weight:700;letter-spacing:.12em;font-size:13px;color:var(--cy)}
+.rec.win .rn{color:var(--ok);letter-spacing:.04em;text-transform:uppercase}
+.ana{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:60;font-weight:700;letter-spacing:.12em;color:var(--cy);text-shadow:0 0 14px #000;text-align:center}
+.zone.blur .ana{display:flex}
+#msg{text-align:center;min-height:30px;margin:14px 0;font-weight:700}
+.ok{color:var(--ok)}.no{color:var(--no)}
+.big{font-size:clamp(20px,4vw,30px);letter-spacing:.06em;text-transform:uppercase;animation:pop .5s}
+@keyframes pop{from{transform:scale(.7);opacity:0}}
+.hint{font-weight:400;color:var(--mu);margin-top:4px}
+.btn{background:linear-gradient(135deg,#0891b2,#14b8a6);color:#fff;border:0;padding:12px 26px;border-radius:99px;font-weight:700;font-size:15px;letter-spacing:.06em;cursor:pointer;margin:6px}
+.btn.alt{background:transparent;border:1px solid var(--cy);color:var(--cy)}
+.card h3{margin:0 0 8px;color:var(--cy)}
+.badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:99px;background:rgba(45,212,191,.16);border:1px solid rgba(45,212,191,.4);margin-left:8px;letter-spacing:.06em;vertical-align:middle}
+.card p{line-height:1.55;margin:8px 0}
+details{margin-top:10px;background:rgba(255,255,255,.05);border-radius:12px;padding:10px 14px}summary{cursor:pointer;color:var(--tl);font-weight:600}
+.center{text-align:center}
+.score{font-size:clamp(44px,10vw,76px);font-weight:800;color:var(--cy);text-shadow:0 0 24px rgba(34,211,238,.5)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}.stats div{padding:12px;border-radius:14px;background:rgba(255,255,255,.06)}.stats b{display:block;font-size:22px}
+.rv{margin:10px 0;border-left:4px solid var(--ok)}.rv.bad{border-left-color:var(--no)}
+.stamp{position:fixed;bottom:0;left:0;right:0;z-index:5;text-align:center;font-size:12px;letter-spacing:.12em;color:var(--mu);padding:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,rgba(5,13,31,.9))}
+ul{line-height:1.8}.qt{text-align:center;font-size:clamp(16px,2.6vw,20px);line-height:1.5;margin:4px 0 6px}.clue{margin:8px auto;max-width:640px;padding:10px 14px;border-radius:12px;background:rgba(45,212,191,.1);border-left:4px solid var(--tl);animation:pop .4s}.btn:disabled{opacity:.5;cursor:default}
+</style></head><body>
+<canvas id="cv"></canvas><div id="app"></div>
+<div class="stamp">Developed by <b style="color:var(--cy)">Faiz Zulkifli</b></div>
+<script>
+// ===== QUESTION DATA (add more objects here; UI adapts automatically) =====
+const QUESTIONS=[
+{id:1,drug:"Adrenaline",receptor:"β-Adrenergic Receptor",distractors:["Muscarinic M₃ Receptor","Histamine H₁ Receptor","μ-Opioid Receptor"],receptorFamily:"GPCR",topic:"Adrenergic receptors",action:"Agonist",effect:"Increased heart rate and cardiovascular response",explanation:"Adrenaline is an adrenergic receptor agonist. It activates adrenergic receptors and produces effects such as increased heart rate and cardiac activity.",extraKnowledge:"β₁ receptors in the heart mediate the increase in rate and force of contraction.",difficulty:1},
+{id:2,drug:"Salbutamol",receptor:"β₂-Adrenergic Receptor",distractors:["α₁-Adrenergic Receptor","Muscarinic M₂ Receptor","Dopamine D₁ Receptor"],receptorFamily:"GPCR",topic:"Adrenergic receptors",action:"Agonist",effect:"Bronchodilation",explanation:"Salbutamol is a selective β₂-adrenergic receptor agonist. It relaxes bronchial smooth muscle and helps relieve bronchospasm.",extraKnowledge:"β₂-receptor activation involves G-protein signalling and increases intracellular cAMP.",difficulty:1},
+{id:3,drug:"Atropine",receptor:"Muscarinic Acetylcholine Receptor",distractors:["Nicotinic Acetylcholine Receptor","β₁-Adrenergic Receptor","Histamine H₂ Receptor"],receptorFamily:"GPCR",topic:"Cholinergic receptors",action:"Antagonist",effect:"Reduced salivation and smooth muscle activity",explanation:"Atropine blocks muscarinic acetylcholine receptors. This reduces parasympathetic effects such as salivation and smooth muscle activity.",extraKnowledge:"Atropine is also used to treat bradycardia and as an antidote for organophosphate poisoning.",difficulty:1},
+{id:4,drug:"Pilocarpine",receptor:"Muscarinic Receptor",distractors:["Nicotinic Receptor","α₂-Adrenergic Receptor","5-HT₁ₐ Receptor"],receptorFamily:"GPCR",topic:"Cholinergic receptors",action:"Agonist",effect:"Increased secretions (e.g. saliva)",explanation:"Pilocarpine is a muscarinic receptor agonist. It mimics the action of acetylcholine at muscarinic receptors and can increase secretions.",extraKnowledge:"Pilocarpine is used for dry mouth and in glaucoma (miosis, improved aqueous outflow).",difficulty:1},
+{id:5,drug:"Nicotine",receptor:"Nicotinic Acetylcholine Receptor",distractors:["Muscarinic Acetylcholine Receptor","GABA-A Receptor","β₂-Adrenergic Receptor"],receptorFamily:"Ligand-gated ion channel",topic:"Cholinergic receptors",action:"Agonist",effect:"Neuronal and ganglionic stimulation",explanation:"Nicotine activates nicotinic acetylcholine receptors. These receptors are ligand-gated ion channels involved in neurotransmission.",extraKnowledge:"Opening the channel lets Na⁺ enter the cell, causing rapid depolarisation.",difficulty:1},
+{id:6,drug:"Morphine",receptor:"μ-Opioid Receptor",distractors:["Dopamine D₂ Receptor","Histamine H₁ Receptor","5-HT₃ Receptor"],receptorFamily:"GPCR",topic:"Opioid receptors",action:"Agonist",effect:"Analgesia",explanation:"Morphine activates μ-opioid receptors in the central nervous system and produces analgesic effects.",extraKnowledge:"Side effects include respiratory depression, constipation and dependence.",difficulty:2},
+{id:7,drug:"Naloxone",receptor:"μ-Opioid Receptor",distractors:["GABA-A Receptor","Muscarinic M₁ Receptor","α₂-Adrenergic Receptor"],receptorFamily:"GPCR",topic:"Opioid receptors",action:"Antagonist",effect:"Reversal of opioid respiratory depression",explanation:"Naloxone is an opioid receptor antagonist. It blocks opioid receptors and is used to reverse opioid-induced respiratory depression.",extraKnowledge:"Naloxone has a short duration, so repeat doses may be needed after long-acting opioid overdose.",difficulty:2},
+{id:8,drug:"Histamine",receptor:"Histamine H₁ Receptor",distractors:["Muscarinic M₃ Receptor","Dopamine D₁ Receptor","κ-Opioid Receptor"],receptorFamily:"GPCR",topic:"Histamine receptors",action:"Agonist",effect:"Itching, vasodilation, increased vascular permeability",explanation:"Histamine activates H₁ receptors and contributes to effects such as itching, vasodilation and increased vascular permeability during allergic responses.",extraKnowledge:"H₁ activation also causes bronchoconstriction in allergic asthma.",difficulty:2},
+{id:9,drug:"Cetirizine",receptor:"Histamine H₁ Receptor",distractors:["Muscarinic M₃ Receptor","5-HT₃ Receptor","Dopamine D₂ Receptor"],receptorFamily:"GPCR",topic:"Histamine receptors",action:"Antagonist / inverse agonist",effect:"Relief of allergic symptoms",explanation:"Cetirizine reduces the effects of histamine at H₁ receptors and is commonly used to relieve allergic symptoms.",extraKnowledge:"Second-generation antihistamines like cetirizine cross the blood–brain barrier less, so cause less sedation.",difficulty:2},
+{id:10,drug:"Dopamine",receptor:"Dopamine Receptor",distractors:["Muscarinic Receptor","5-HT₃ Receptor","GABA-A Receptor"],receptorFamily:"GPCR",topic:"Dopamine receptors",action:"Agonist",effect:"CNS neurotransmission and cardiovascular effects",explanation:"Dopamine activates dopamine receptors and plays important roles in the central nervous system and cardiovascular system.",extraKnowledge:"Dopamine receptors are divided into D₁-like and D₂-like families.",difficulty:2},
+{id:11,drug:"Haloperidol",receptor:"D₂ Dopamine Receptor",distractors:["Histamine H₁ Receptor","Muscarinic M₂ Receptor","β₂-Adrenergic Receptor"],receptorFamily:"GPCR",topic:"Dopamine receptors",action:"Antagonist",effect:"Antipsychotic effect",explanation:"Haloperidol blocks D₂ dopamine receptors and is commonly associated with the treatment of psychotic disorders.",extraKnowledge:"D₂ blockade in the nigrostriatal pathway can cause extrapyramidal side effects.",difficulty:3},
+{id:12,drug:"Serotonin",receptor:"Serotonin (5-HT) Receptor",distractors:["Dopamine D₂ Receptor","Histamine H₁ Receptor","μ-Opioid Receptor"],receptorFamily:"GPCR / Ion channel",topic:"Serotonin receptors",action:"Agonist",effect:"Mood, GI activity and neurotransmission",explanation:"Serotonin activates serotonin receptors and is involved in many physiological processes including mood, gastrointestinal activity and neurotransmission.",extraKnowledge:"There are many 5-HT subtypes; most are GPCRs but 5-HT₃ is a ligand-gated ion channel.",difficulty:3},
+{id:13,drug:"Ondansetron",receptor:"5-HT₃ Receptor",distractors:["5-HT₁ₐ Receptor","Dopamine D₂ Receptor","GABA-A Receptor"],receptorFamily:"Ligand-gated ion channel",topic:"Serotonin receptors",action:"Antagonist",effect:"Prevents nausea and vomiting",explanation:"Ondansetron blocks 5-HT₃ receptors and is used to prevent nausea and vomiting.",extraKnowledge:"Commonly used for chemotherapy- and post-operative nausea and vomiting.",difficulty:3},
+{id:14,drug:"GABA",receptor:"GABA-A Receptor",distractors:["NMDA Receptor","Nicotinic Acetylcholine Receptor","5-HT₃ Receptor"],receptorFamily:"Ligand-gated ion channel",topic:"GABA & glutamate receptors",action:"Agonist",effect:"Reduced neuronal excitability",explanation:"GABA is an inhibitory neurotransmitter. Activation of GABA-A receptors reduces neuronal excitability.",extraKnowledge:"The GABA-A channel allows Cl⁻ entry, hyperpolarising the neuron.",difficulty:3},
+{id:15,drug:"Diazepam",receptor:"GABA-A Receptor",distractors:["NMDA Receptor","5-HT₃ Receptor","Nicotinic Acetylcholine Receptor"],receptorFamily:"Ligand-gated ion channel",topic:"GABA & glutamate receptors",action:"Positive allosteric modulator",effect:"Anxiolytic, sedative, anticonvulsant",explanation:"Diazepam enhances the effects of GABA at GABA-A receptors. This contributes to its anxiolytic, sedative and anticonvulsant effects.",extraKnowledge:"Benzodiazepines bind a site different from GABA and increase the frequency of channel opening.",difficulty:3},
+{id:16,drug:"Glutamate",receptor:"NMDA Receptor",distractors:["GABA-A Receptor","Nicotinic Acetylcholine Receptor","5-HT₃ Receptor"],receptorFamily:"Ligand-gated ion channel",topic:"GABA & glutamate receptors",action:"Agonist",effect:"Excitatory neurotransmission",explanation:"Glutamate is an important excitatory neurotransmitter. NMDA receptors are glutamate-gated ion channels involved in neuronal signalling.",extraKnowledge:"NMDA receptors need glycine as a co-agonist and are permeable to Ca²⁺.",difficulty:4},
+{id:17,drug:"Insulin",receptor:"Insulin Receptor",distractors:["Glucocorticoid Receptor","β₂-Adrenergic Receptor","Nicotinic Acetylcholine Receptor"],receptorFamily:"Enzyme-linked receptor",topic:"Insulin & steroid receptors",action:"Agonist",effect:"Lowers blood glucose",explanation:"Insulin binds to insulin receptors and promotes cellular responses that help regulate blood glucose levels.",extraKnowledge:"The insulin receptor is a receptor tyrosine kinase that phosphorylates intracellular proteins.",difficulty:4},
+{id:18,drug:"Cortisol",receptor:"Glucocorticoid Receptor",distractors:["Insulin Receptor","β₂-Adrenergic Receptor","GABA-A Receptor"],receptorFamily:"Intracellular receptor",topic:"Insulin & steroid receptors",action:"Agonist",effect:"Metabolic and stress response; anti-inflammatory",explanation:"Cortisol binds to glucocorticoid receptors inside cells and influences gene expression involved in metabolism and the stress response.",extraKnowledge:"The ligand–receptor complex moves to the nucleus and alters gene transcription (slower onset).",difficulty:4},
+{id:19,drug:"Acetylcholine",receptor:"Cholinergic Receptor (Muscarinic & Nicotinic)",distractors:["Dopamine D₂ Receptor","α₁-Adrenergic Receptor","Histamine H₁ Receptor"],receptorFamily:"GPCR & Ion channel",topic:"Cholinergic receptors",action:"Agonist",effect:"Parasympathetic and neuromuscular transmission",explanation:"Acetylcholine is a neurotransmitter that acts on both muscarinic and nicotinic cholinergic receptors.",extraKnowledge:"Muscarinic receptors are GPCRs; nicotinic receptors are ligand-gated ion channels.",difficulty:4},
+{id:20,drug:"Adenosine",receptor:"A₁ Adenosine Receptor",distractors:["β₁-Adrenergic Receptor","Muscarinic M₂ Receptor","Dopamine D₁ Receptor"],receptorFamily:"GPCR",topic:"Adenosine receptors",action:"Agonist",effect:"Slows cardiac conduction; modulates neurotransmission",explanation:"Adenosine activates adenosine receptors and contributes to several physiological effects, including effects on cardiac activity and neurotransmission.",extraKnowledge:"IV adenosine is used to terminate certain supraventricular tachycardias. Caffeine blocks adenosine receptors.",difficulty:4}
+];
+// ===== CLUE SYSTEM: question wording + 3 clues per question (Clinical -> Physiological -> Strong) =====
+const CLUES={
+1:["Adrenaline is producing its <b>cardiac effects</b>. Which receptor is primarily responsible?",["This receptor is strongly associated with the heart.","Activation increases heart rate and force of contraction.","Think of the β₁-adrenergic receptor found predominantly in cardiac tissue."]],
+2:["Salbutamol is used to relieve <b>bronchospasm</b>. Which receptor does it activate?",["This receptor is associated with airway smooth muscle.","Activation causes relaxation of bronchial smooth muscle.","Think of the β₂-adrenergic receptor."]],
+3:["Atropine reduces parasympathetic effects by blocking which receptor?",["The receptor normally responds to acetylcholine.","It is involved in salivation, smooth muscle activity and heart rate.","Think of the muscarinic cholinergic receptor."]],
+4:["Pilocarpine produces parasympathetic-like effects. Which receptor does it activate?",["The receptor normally responds to acetylcholine.","Activation can increase glandular secretions.","Think of the muscarinic receptor."]],
+5:["Nicotine acts on which type of cholinergic receptor?",["This receptor is involved in rapid neurotransmission.","Unlike muscarinic receptors, this receptor is a ligand-gated ion channel.","Its name begins with nicotinic."]],
+6:["Morphine produces its <b>analgesic</b> effect by activating which receptor?",["This receptor is associated with opioid analgesia.","Activation reduces the perception and transmission of pain.","Think of the mu (μ) opioid receptor."]],
+7:["Naloxone is used to reverse opioid effects. Which receptor does it block?",["It is used in opioid overdose.","It blocks the receptor responsible for many opioid effects, including respiratory depression.","Think of the μ-opioid receptor."]],
+8:["Histamine contributes to <b>itching and allergic reactions</b>. Which receptor is primarily involved?",["This receptor is strongly associated with allergic symptoms.","Activation contributes to itching and increased vascular permeability.","Think of the H₁ receptor."]],
+9:["Cetirizine reduces symptoms of <b>allergic rhinitis</b> by acting on which receptor?",["It is an antihistamine.","It reduces the effects of histamine responsible for itching and sneezing.","Think of the H₁ histamine receptor."]],
+10:["Dopamine produces its effects by activating which type of receptor?",["This receptor responds to a major neurotransmitter in the CNS.","The neurotransmitter is involved in movement, motivation and reward.","Think of the dopamine receptor."]],
+11:["Haloperidol produces its <b>antipsychotic</b> effect mainly by blocking which receptor?",["It is an antipsychotic drug.","It reduces excessive dopaminergic signalling.","Think specifically of the D₂ dopamine receptor."]],
+12:["Serotonin produces its effects by acting on which receptor family?",["It is an important neurotransmitter.","It is involved in mood, gastrointestinal function and neurotransmission.","Think of the 5-HT receptor family."]],
+13:["Ondansetron prevents <b>nausea and vomiting</b> by blocking which receptor?",["It is an antiemetic.","It blocks a serotonin receptor involved in the vomiting reflex.","Think of the 5-HT₃ receptor."]],
+14:["GABA produces <b>inhibitory</b> effects in the CNS by acting on which receptor?",["GABA is the major inhibitory neurotransmitter in the brain.","One important GABA receptor is a ligand-gated ion channel.","Think of the GABA-A receptor."]],
+15:["Diazepam enhances the action of GABA at which receptor?",["Diazepam is a benzodiazepine.","It enhances the effects of the brain's major inhibitory neurotransmitter.","Think of GABA acting at GABA-A receptors."]],
+16:["Glutamate activates several receptors. Which receptor is an important <b>glutamate-gated ion channel</b>?",["Glutamate is a major excitatory neurotransmitter.","This receptor is important in neuronal communication and learning processes.","Think of the NMDA receptor."]],
+17:["Insulin binds to which receptor to regulate <b>blood glucose</b>?",["Insulin helps lower blood glucose.","Its receptor is located on the cell surface and has enzyme activity.","Think of the insulin receptor, a receptor tyrosine kinase."]],
+18:["Cortisol produces many of its effects by binding to which receptor?",["Cortisol is a steroid hormone.","Unlike many neurotransmitter receptors, its receptor is located inside the cell.","Think of the glucocorticoid receptor."]],
+19:["Acetylcholine is producing a <b>parasympathetic effect that slows the heart</b>. Which receptor is involved?",["Think about the parasympathetic nervous system.","This receptor is found on many parasympathetic target organs.","Think of the muscarinic receptor."]],
+20:["Adenosine can <b>slow cardiac activity</b> by acting on which receptor?",["This receptor is important in cardiac conduction.","Activation can slow the heart rate.","Think of the A₁ adenosine receptor."]]};
+const OVERRIDE={
+1:{receptor:"β₁-Adrenergic Receptor",effect:"Increased heart rate and force of contraction",explanation:"Adrenaline activates β₁-adrenergic receptors in the heart, increasing heart rate and contractility."},
+9:{explanation:"Cetirizine blocks/inhibits H₁ receptor-mediated effects of histamine and is commonly used to relieve allergic symptoms."},
+19:{receptor:"Muscarinic Receptor",distractors:["Nicotinic Receptor","α₁-Adrenergic Receptor","Dopamine D₂ Receptor"],receptorFamily:"GPCR",effect:"Slows heart rate (parasympathetic effect)",explanation:"Acetylcholine activates muscarinic receptors on parasympathetic target organs. In the heart, muscarinic activation can reduce heart rate.",extraKnowledge:"Acetylcholine also acts on nicotinic receptors, so questions must state the effect to pick the right subtype."}};
+QUESTIONS.forEach(q=>{Object.assign(q,OVERRIDE[q.id]||{});q.q=CLUES[q.id][0];q.clues=CLUES[q.id][1]});
+const PTS=[10,8,6,4],MAX=QUESTIONS.length*10,LV=["","Basic","Therapeutic","Subtypes","Advanced"];
+const $=s=>document.querySelector(s),app=$('#app');
+let S={i:0,res:[],score:0},salt=Math.random()*1e6|0;
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const rng=s=>()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+// Abstract receptor: same pocket size & overall form; only random decoration/orientation (no answer cues)
+function recSVG(seed){const R=rng(seed),rot=(R()-.5)*60,fl=R()<.5?-1:1,h=185+R()*25|0;let g='';
+ for(let i=0;i<7;i++){const x=40+i*20+(R()-.5)*5,y=62+(R()-.5)*10,hh=70+R()*14,t=(R()-.5)*14;g+=`<rect x="${x-7}" y="${y}" width="14" height="${hh}" rx="7" fill="hsla(${h},70%,45%,.55)" stroke="hsl(${h},80%,65%)" stroke-width="1.2" transform="rotate(${t} ${x} ${y+hh/2})"/>`}
+ for(let i=0;i<4+(R()*3|0);i++){const x=30+R()*140,top=R()<.5,y=top?52+R()*14:140+R()*14;g+=`<circle cx="${x}" cy="${y}" r="${3+R()*5}" fill="hsla(${h+20},80%,70%,.5)"/>`}
+ for(let i=0;i<2+(R()*2|0);i++){const x=35+R()*130;g+=`<path d="M${x} 134 q${(R()-.5)*30} 24 ${(R()-.5)*40} 14" stroke="hsl(${h},70%,60%)" fill="none" stroke-width="2"/>`}
+ const px=75+R()*50,py=44+R()*10;
+ g+=`<circle class="pocket" cx="${px}" cy="${py}" r="20" fill="rgba(2,10,25,.85)" stroke="hsl(${h},90%,70%)" stroke-dasharray="4 3"/><circle cx="${px+(R()-.5)*8}" cy="${py+(R()-.5)*8}" r="${6+R()*5}" fill="hsla(${h},90%,60%,.25)"/>`;
+ return`<svg viewBox="0 0 200 180"><g transform="translate(100 90) rotate(${rot}) scale(${fl} 1) translate(-100 -90)"><rect x="10" y="66" width="180" height="76" rx="14" fill="rgba(34,211,238,.07)" stroke="rgba(34,211,238,.25)"/>${g}</g></svg>`}
+function start(){S={i:0,res:[],score:0};salt=Math.random()*1e6|0;
+ app.innerHTML=`<div class="glass center"><h1>DRUG–RECEPTOR BINDING CHALLENGE</h1><p class="prompt">UiTM Diploma in Pharmacy · PH110</p><p style="line-height:1.7">Enter the molecular simulation. In each of the <b>${QUESTIONS.length} questions</b> you get one ligand and four unnamed receptors. Reason from drug → effect → receptor, using clues if you get stuck — <b>not the shapes</b> — to drag the ligand onto the receptor it binds to.</p><p class="hint">Scoring: no clue +10 · clue 1 +8 · clue 2 +6 · clue 3 +4 · max 3 attempts · up to ${MAX} points</p><button class="btn" id="go">START SIMULATION</button></div>`;
+ $('#go').onclick=()=>show(0)}
+function show(i){S.i=i;const q=QUESTIONS[i],opts=shuffle([q.receptor,...q.distractors]);let att=0,clue=0,lock=false,cur={x:0,y:0};
+ app.innerHTML=`<h1>DRUG–RECEPTOR BINDING CHALLENGE</h1>
+ <div class="bar"><span class="pill">QUESTION ${String(i+1).padStart(2,'0')} / ${QUESTIONS.length}</span><span class="pill">Level: ${LV[q.difficulty]}</span><span class="pill" id="sc">Score: ${S.score} / ${MAX}</span></div>
+ <div class="prog"><i style="width:${i/QUESTIONS.length*100}%"></i></div>
+ <div class="glass"><p class="qt">${q.q}</p><p class="prompt">Drag the ligand to the receptor it binds to.</p>
+ <div class="zone" id="zone"><div class="lig-wrap"><span class="lbl">LIGAND</span><div id="lig">⬡ ${q.drug.toUpperCase()}</div></div>
+ <div class="recs">${opts.map((o,k)=>`<div class="rec" data-k="${k}">${recSVG(salt+q.id*97+k*13+o.length)}<div class="rn">RECEPTOR ${'ABCD'[k]}</div></div>`).join('')}</div>
+ <div class="ana">Analysing receptor interaction...</div></div>
+ <div id="msg"></div><div class="center"><button class="btn alt" id="clue">💡 SHOW CLUE 1 / 3 (−2 pts)</button></div><div id="clues"></div><div id="after"></div></div>`;
+ const L=$('#lig'),msg=$('#msg'),zone=$('#zone');let sx,sy,drag=false;const cb=$('#clue');
+ cb.onclick=()=>{if(lock||clue>=3)return;clue++;$('#clues').insertAdjacentHTML('beforeend',`<div class="clue">💡 <b>Clue ${clue} · ${['Clinical','Physiological','Strong'][clue-1]}:</b> ${q.clues[clue-1]}</div>`);cb.textContent=clue<3?`💡 SHOW CLUE ${clue+1} / 3 (−2 pts)`:'No more clues';cb.disabled=clue>=3};
+ const hit=e=>{for(const el of document.elementsFromPoint(e.clientX,e.clientY)){const r=el.closest&&el.closest('.rec');if(r)return r}};
+ const clr=()=>document.querySelectorAll('.rec').forEach(r=>r.classList.remove('hov'));
+ const back=()=>{L.style.transition='transform .4s';L.style.transform='translate(0,0)';cur={x:0,y:0}};
+ L.onpointerdown=e=>{if(lock)return;drag=true;sx=e.clientX-cur.x;sy=e.clientY-cur.y;L.setPointerCapture(e.pointerId);L.style.transition='none';L.classList.add('drag')};
+ L.onpointermove=e=>{if(!drag)return;cur={x:e.clientX-sx,y:e.clientY-sy};L.style.transform=`translate(${cur.x}px,${cur.y}px)`;clr();const t=hit(e);if(t)t.classList.add('hov')};
+ L.onpointercancel=()=>{drag=false;L.classList.remove('drag');clr();back()};
+ L.onpointerup=e=>{if(!drag)return;drag=false;L.classList.remove('drag');const t=hit(e);clr();if(!t){back();return}drop(t)};
+ function reveal(card,pts){cb.style.display='none';card.classList.add('win');card.querySelector('.rn').textContent=q.receptor;
+  S.res[i]={id:q.id,attempts:att,clues:clue,pts,solved:pts>0};S.score+=pts;$('#sc').textContent=`Score: ${S.score} / ${MAX}`;
+  msg.innerHTML=pts>0?`<div class="big ok">${q.receptor}</div><div class="ok" style="font-size:22px;margin-top:6px">✓ Correct!</div><div style="color:var(--cy);font-size:20px">+${pts} POINTS</div>`:`<div class="no">✕ Out of attempts — 0 points</div><div class="big">${q.receptor}</div><div class="hint">This was the correct receptor.</div>`;
+  $('#after').innerHTML=`<div class="glass card" style="margin-top:12px"><h3>${q.receptor}<span class="badge">${q.receptorFamily}</span></h3><p><b>Drug:</b> ${q.drug}<br><b>Action:</b> ${q.action}<br><b>Main effect:</b> ${q.effect}</p><p>${q.explanation}</p><details><summary>Extra Knowledge (optional)</summary><p>${q.extraKnowledge}</p></details></div><div class="center"><button class="btn" id="nx">${i+1<QUESTIONS.length?'NEXT QUESTION ▶':'VIEW RESULTS ▶'}</button></div>`;
+  $('#nx').onclick=()=>i+1<QUESTIONS.length?show(i+1):final();$('#nx').scrollIntoView({behavior:'smooth',block:'center'})}
+ function drop(card){const k=+card.dataset.k;att++;
+  if(opts[k]===q.receptor){lock=true;const p=card.querySelector('.pocket').getBoundingClientRect(),l=L.getBoundingClientRect();
+   cur={x:cur.x+p.left+p.width/2-l.left-l.width/2,y:cur.y+p.top+p.height/2-l.top-l.height/2};
+   L.style.transition='transform .5s';L.style.transform=`translate(${cur.x}px,${cur.y}px) scale(.65)`;L.classList.add('bound');
+   msg.innerHTML='<div class="big ok">✓ BINDING SUCCESS</div>';
+   setTimeout(()=>zone.classList.add('blur'),700);
+   setTimeout(()=>{zone.classList.remove('blur');reveal(card,PTS[clue])},1800)}
+  else{card.classList.add('shake');setTimeout(()=>card.classList.remove('shake'),500);back();
+   if(att>=3){lock=true;const c=[...document.querySelectorAll('.rec')].find(r=>opts[+r.dataset.k]===q.receptor);reveal(c,0);return}
+   msg.innerHTML=`<div class="no">✕ NOT QUITE!</div><div class="hint">💡 Rethink the drug → effect → receptor link, or reveal a clue.</div><div class="hint">Attempts left: ${3-att}</div>`}}
+}
+function rating(s){return s>=180?['🟢','EXCELLENT']:s>=150?['🔵','VERY GOOD']:s>=120?['🟡','GOOD']:s>=80?['🟠','NEEDS IMPROVEMENT']:['🔴','REVIEW RECOMMENDED']}
+function final(){const r=S.res,sol=r.filter(x=>x.solved),n=a=>sol.filter(x=>x.attempts===a).length,[ic,lb]=rating(S.score);
+ const miss=r.filter(x=>x.attempts>1||!x.solved||x.clues>0).map(x=>QUESTIONS.find(q=>q.id===x.id));
+ const topics=[...new Set(miss.map(q=>q.topic))],fams=[...new Set(miss.filter(q=>/Ligand/.test(q.receptorFamily)).map(()=> 'Ligand-gated ion channels'))];
+ app.innerHTML=`<div class="glass center"><h1>DRUG–RECEPTOR CHALLENGE COMPLETE</h1><p class="lbl" style="margin-top:20px">YOUR SCORE</p><div class="score">${S.score} / ${MAX}</div><h2>${Math.round(S.score/MAX*100)}%</h2><h2>${ic} ${lb}</h2>
+ <div class="stats"><div><b>${sol.length} / ${QUESTIONS.length}</b>Correct Answers</div><div><b>${sol.filter(x=>!x.clues).length}</b>No Clue</div><div><b>${sol.filter(x=>x.clues===1).length}</b>After Clue 1</div><div><b>${sol.filter(x=>x.clues===2).length}</b>After Clue 2</div><div><b>${sol.filter(x=>x.clues===3).length}</b>After Clue 3</div></div>
+ <div style="text-align:left;max-width:520px;margin:auto"><h3 style="color:var(--cy)">Topics to Review</h3>${[...topics,...fams].length?`<p>You may want to review:</p><ul>${[...topics,...fams].map(t=>`<li>${t}</li>`).join('')}</ul>`:'<p class="ok">Outstanding — no weak areas detected!</p>'}</div>
+ <button class="btn" id="rv">REVIEW ANSWERS</button><button class="btn alt" id="rt">RETRY QUIZ</button></div>`;
+ $('#rv').onclick=()=>review(false);$('#rt').onclick=start}
+function review(only){const list=QUESTIONS.filter(q=>{const x=S.res.find(r=>r.id===q.id);return!only||(x&&(!x.solved||x.attempts>1||x.clues>0))});
+ app.innerHTML=`<h1>REVIEW ANSWERS</h1><div class="center" style="margin:14px 0"><button class="btn${only?' alt':''}" id="a">ALL QUESTIONS</button><button class="btn${only?'':' alt'}" id="w">MISSED ONLY</button><button class="btn alt" id="b">◀ RESULTS</button></div>
+ ${list.length?list.map(q=>{const x=S.res.find(r=>r.id===q.id)||{},bad=!x.solved||x.attempts>1||x.clues>0;return`<div class="glass card rv ${bad?'bad':''}"><h3>Q${q.id}. ${q.drug}<span class="badge">${x.solved?`${x.pts} pts · ${x.clues} clue${x.clues==1?'':'s'}`:'0 pts'}</span></h3><p><b>Correct receptor:</b> ${q.receptor}<br><b>Action:</b> ${q.action}<br><b>Main effect:</b> ${q.effect}</p><p><b>Explanation:</b> ${q.explanation}</p></div>`}).join(''):'<p class="center ok">Nothing missed — perfect run!</p>'}
+ <div class="center"><button class="btn" id="rt">RETRY QUIZ</button></div>`;
+ $('#a').onclick=()=>review(false);$('#w').onclick=()=>review(true);$('#b').onclick=final;$('#rt').onclick=start;scrollTo(0,0)}
+// particles
+(function(){const c=$('#cv'),x=c.getContext('2d');let w,h,P=[];const rs=()=>{w=c.width=innerWidth;h=c.height=innerHeight};rs();addEventListener('resize',rs);
+ for(let i=0;i<40;i++)P.push({x:Math.random()*w,y:Math.random()*h,r:1+Math.random()*3,vx:(Math.random()-.5)*.3,vy:-.1-Math.random()*.3});
+ (function f(){x.clearRect(0,0,w,h);P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.y<-5){p.y=h+5;p.x=Math.random()*w}x.beginPath();x.arc(p.x,p.y,p.r,0,7);x.fillStyle='rgba(34,211,238,.35)';x.shadowColor='#22d3ee';x.shadowBlur=10;x.fill()});requestAnimationFrame(f)})()})();
+start();
+</script></body></html>
