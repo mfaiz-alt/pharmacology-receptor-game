@@ -102,7 +102,7 @@ function initMusic(){
   if(!AC)return;
   audioCtx=new AC();
   masterGain=audioCtx.createGain();
-  masterGain.gain.value=0.045; // subtle classroom-friendly volume
+  masterGain.gain.value=0.12; // subtle classroom-friendly volume
   masterGain.connect(audioCtx.destination);
 }
 
